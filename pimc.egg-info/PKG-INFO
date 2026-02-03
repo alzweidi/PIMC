@@ -1,0 +1,404 @@
+Metadata-Version: 2.4
+Name: pimc
+Version: 2.0.0
+Summary: High-performance Monte Carlo estimation of π with beautiful visualizations
+Author: Monte Carlo Team
+License: MIT
+Project-URL: Homepage, https://github.com/username/pimc
+Project-URL: Documentation, https://github.com/username/pimc#readme
+Project-URL: Repository, https://github.com/username/pimc
+Project-URL: Issues, https://github.com/username/pimc/issues
+Keywords: monte-carlo,pi,simulation,statistics,visualization,mathematics,probability
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Console
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering :: Mathematics
+Classifier: Topic :: Scientific/Engineering :: Visualization
+Classifier: Typing :: Typed
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: matplotlib>=3.7.0
+Requires-Dist: scipy>=1.10.0
+Provides-Extra: cli
+Requires-Dist: rich>=13.0.0; extra == "cli"
+Provides-Extra: web
+Requires-Dist: flask>=3.0.0; extra == "web"
+Requires-Dist: flask-cors>=4.0.0; extra == "web"
+Provides-Extra: all
+Requires-Dist: rich>=13.0.0; extra == "all"
+Requires-Dist: flask>=3.0.0; extra == "all"
+Requires-Dist: flask-cors>=4.0.0; extra == "all"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Dynamic: license-file
+
+<div align="center">
+
+# 🎯 πMC
+
+### High-Performance Monte Carlo Estimation of π
+
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)]()
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+**Beautiful** • **Fast** • **Accurate** • **Educational**
+
+[Features](#-features) • [Quick Start](#-quick-start) • [CLI](#-command-line-interface) • [Web Dashboard](#-web-dashboard) • [API](#-python-api) • [Visualization](#-visualization)
+
+</div>
+
+---
+
+## ✨ Features
+
+- **🚀 High Performance** — Vectorized NumPy computation with optional parallel processing
+- **🎨 Stunning Visualizations** — Publication-quality plots with 8 beautiful themes
+- **📊 Advanced Statistics** — Confidence intervals, convergence diagnostics, hypothesis testing
+- **🔬 Variance Reduction** — Antithetic, stratified, and quasi-random sampling methods
+- **💻 Rich CLI** — Beautiful terminal interface with progress bars and live updates
+- **🌐 Web Dashboard** — Interactive browser-based visualization with real-time simulation
+- **📈 Real-Time Animation** — Watch the simulation converge in real-time
+- **✅ Comprehensive Tests** — Full test suite with pytest
+
+---
+
+## 🚀 Quick Start
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/YOUR_USERNAME/pimc.git
+cd pimc
+
+# Install with pip (basic)
+pip install -e .
+
+# Install with all extras (CLI + Web)
+pip install -e ".[all]"
+
+# Install for development
+pip install -e ".[dev]"
+```
+
+### Run Your First Simulation
+
+```python
+from pimc import MonteCarloPi
+
+# Simple estimation
+sim = MonteCarloPi(n_points=1_000_000, seed=42)
+result = sim.run()
+
+print(f"π ≈ {result.estimate:.10f}")
+print(f"Error: {result.error:.2e}")
+print(f"Grade: {result.accuracy_grade}")
+```
+
+Output:
+```
+π ≈ 3.1416395600
+Error: 4.69e-05
+Grade: A
+```
+
+---
+
+## 💻 Command-Line Interface
+
+The CLI provides a beautiful terminal experience with rich formatting.
+
+```bash
+# Basic simulation with 1 million points
+pimc run -n 1000000
+
+# Use variance reduction (antithetic sampling)
+pimc run -n 100000 --method antithetic
+
+# Save visualization to file
+pimc run -n 50000 -o visualization.png --theme cyberpunk
+
+# Benchmark different methods
+pimc benchmark
+
+# Statistical analysis with 1000 trials
+pimc analyze -t 1000 -n 10000
+
+# Interactive real-time animation
+pimc interactive -n 20000
+```
+
+### CLI Output Example
+
+```
+╔══════════════════════════════════════════════════════════════════════╗
+║     ██████╗ ██╗███╗   ███╗ ██████╗                                   ║
+║     ██╔══██╗██║████╗ ████║██╔════╝                                   ║
+║     ██████╔╝██║██╔████╔██║██║        Monte Carlo Estimation of π     ║
+║     ██╔═══╝ ██║██║╚██╔╝██║██║        High-Performance • Beautiful    ║
+║     ██║     ██║██║ ╚═╝ ██║╚██████╗                                   ║
+║     ╚═╝     ╚═╝╚═╝     ╚═╝ ╚═════╝                                   ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                      Simulation Results                              │
+├─────────────────────────────────────────────────────────────────────┤
+│  Estimated π    │  3.1415926536                                      │
+│  True π         │  3.1415926536                                      │
+│  Error          │  2.45e-05 (0.0008%)                                │
+│  Grade          │  A                                                 │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🌐 Web Dashboard
+
+Launch an interactive web dashboard for visual exploration:
+
+```bash
+# Start the web server
+python -m pimc.web.app
+
+# Visit http://localhost:5000
+```
+
+Features:
+- **Real-time scatter plot** with D3.js
+- **Convergence chart** showing estimate approaching π
+- **Multiple sampling methods** to compare
+- **Adjustable sample sizes** with live updates
+
+---
+
+## 📚 Python API
+
+### Basic Usage
+
+```python
+from pimc import MonteCarloPi, PiVisualizer, StatisticalAnalyzer
+
+# Run simulation
+sim = MonteCarloPi(
+    n_points=100_000,
+    seed=42,
+    method="stratified",  # or "standard", "antithetic", "quasi_random"
+)
+result = sim.run()
+
+# Access results
+print(f"Estimate: {result.estimate}")
+print(f"Points inside: {result.n_inside:,}")
+print(f"Time: {result.elapsed_time*1000:.2f}ms")
+print(f"Points/sec: {result.points_per_second:,.0f}")
+```
+
+### Visualization
+
+```python
+from pimc import MonteCarloPi, PiVisualizer
+
+sim = MonteCarloPi(n_points=50_000, seed=42)
+result = sim.run()
+
+# Create comprehensive visualization
+viz = PiVisualizer(theme="cyberpunk")  # 8 themes available!
+viz.plot_comprehensive(result)
+viz.save("pi_visualization.png", dpi=300)
+viz.show()
+```
+
+### Statistical Analysis
+
+```python
+from pimc import MonteCarloPi, StatisticalAnalyzer
+
+analyzer = StatisticalAnalyzer(warmup_samples=100)
+
+# Run multiple trials
+for _ in range(1000):
+    sim = MonteCarloPi(n_points=10_000)
+    result = sim.run()
+    analyzer.add_estimate(result.estimate)
+
+# Get statistics
+ci = analyzer.confidence_interval(level=0.95)
+print(f"95% CI: [{ci.lower:.8f}, {ci.upper:.8f}]")
+print(f"Contains π: {ci.contains_pi}")
+
+summary = analyzer.summary()
+print(f"Mean: {summary['mean']:.10f}")
+print(f"Std: {summary['std']:.6f}")
+```
+
+### Streaming for Real-Time Visualization
+
+```python
+from pimc import MonteCarloPi
+
+sim = MonteCarloPi(n_points=10_000, seed=42)
+
+for n, estimate, x, y, inside in sim.stream(batch_size=100):
+    print(f"n={n:,}: π ≈ {estimate:.6f}")
+```
+
+---
+
+## 🎨 Visualization Themes
+
+Choose from 8 stunning themes:
+
+| Theme | Description |
+|-------|-------------|
+| `midnight` | Deep blue-black with cyan/magenta accents (default) |
+| `cyberpunk` | Neon colors on dark purple background |
+| `ocean` | Deep sea blues with aqua highlights |
+| `forest` | Natural greens with earth tones |
+| `neon` | Pure black with bright neon colors |
+| `sunset` | Warm oranges and reds |
+| `publication` | Clean white background for papers |
+| `colorblind` | Accessible color palette |
+
+```python
+from pimc import PiVisualizer
+
+viz = PiVisualizer(theme="cyberpunk")
+```
+
+---
+
+## 🔬 Sampling Methods
+
+| Method | Description | Variance Reduction |
+|--------|-------------|-------------------|
+| `standard` | Uniform random sampling | Baseline |
+| `antithetic` | Uses (x, y) and (1-x, 1-y) pairs | ~30% reduction |
+| `stratified` | Divides space into grid cells | ~40% reduction |
+| `quasi_random` | Halton low-discrepancy sequence | ~50% reduction |
+
+```python
+from pimc import MonteCarloPi
+
+# Compare methods
+for method in ["standard", "antithetic", "stratified", "quasi_random"]:
+    sim = MonteCarloPi(n_points=100_000, method=method, seed=42)
+    result = sim.run()
+    print(f"{method:12} → π ≈ {result.estimate:.8f} (error: {result.error:.2e})")
+```
+
+---
+
+## 📐 The Mathematics
+
+The Monte Carlo method estimates π using geometric probability:
+
+```
+┌─────────────────────────────────────┐
+│  Area of quarter circle   π/4      │
+│  ─────────────────────── = ───     │
+│  Area of unit square       1       │
+│                                     │
+│  Therefore:                         │
+│                                     │
+│  π = 4 × (points inside circle)    │
+│        ─────────────────────────   │
+│           (total points)            │
+└─────────────────────────────────────┘
+```
+
+### Convergence Rate
+
+The error decreases at rate **O(1/√n)**:
+- 100 points → ~0.16 error
+- 10,000 points → ~0.016 error  
+- 1,000,000 points → ~0.0016 error
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=pimc --cov-report=html
+
+# Run specific test file
+pytest tests/test_simulation.py -v
+```
+
+---
+
+## 📁 Project Structure
+
+```
+pimc/
+├── __init__.py          # Package exports
+├── __main__.py          # python -m pimc entry point
+├── core/
+│   ├── simulation.py    # Monte Carlo engine
+│   └── statistics.py    # Statistical analysis
+├── visualization/
+│   ├── plots.py         # Matplotlib visualizations
+│   └── themes.py        # Color themes
+├── cli/
+│   └── main.py          # Rich CLI interface
+└── web/
+    ├── app.py           # Flask web server
+    └── templates/       # HTML templates
+```
+
+---
+
+## 🎓 Educational Value
+
+This project demonstrates:
+
+- **Monte Carlo Methods** — Random sampling for numerical estimation
+- **Probability Theory** — Geometric probability and the law of large numbers
+- **Variance Reduction** — Techniques to improve estimation efficiency
+- **Statistical Inference** — Confidence intervals and hypothesis testing
+- **Convergence Analysis** — Understanding simulation accuracy
+- **Software Engineering** — Clean architecture, testing, documentation
+
+Perfect for courses in:
+- Computational Mathematics
+- Probability and Statistics
+- Scientific Computing
+- Quantitative Finance
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+<div align="center">
+
+**Made with ❤️ and mathematics**
+
+[⬆ Back to top](#-πmc)
+
+</div>
+

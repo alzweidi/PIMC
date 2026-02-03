@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>πMC - Monte Carlo π Estimation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a25;
+            --text-primary: #e8e8f0;
+            --text-secondary: #8888aa;
+            --accent-green: #00d4aa;
+            --accent-red: #ff4d6a;
+            --accent-blue: #4d9fff;
+            --accent-purple: #9d6eff;
+            --accent-gold: #ffd93d;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .glass {
+            background: rgba(18, 18, 26, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .glow-green { box-shadow: 0 0 20px rgba(0, 212, 170, 0.3); }
+        .glow-blue { box-shadow: 0 0 20px rgba(77, 159, 255, 0.3); }
+        .glow-purple { box-shadow: 0 0 20px rgba(157, 110, 255, 0.3); }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .scatter-canvas {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+        }
+        
+        input[type="range"] {
+            -webkit-appearance: none;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(77, 159, 255, 0.4);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .animate-pulse-slow {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="min-h-screen p-6 lg:p-8">
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-5xl font-bold mb-3">
+                <span class="gradient-text">πMC</span>
+            </h1>
+            <p class="text-lg text-gray-400">Monte Carlo Estimation of π</p>
+            <p class="text-sm text-gray-500 mt-1">High-Performance • Beautiful • Accurate</p>
+        </header>
+
+        <!-- Main Content -->
+        <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Column: Controls & Stats -->
+            <div class="space-y-6">
+                <!-- Control Panel -->
+                <div class="glass rounded-2xl p-6">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                        </svg>
+                        Controls
+                    </h2>
+                    
+                    <div class="space-y-5">
+                        <!-- Sample Size -->
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">
+                                Sample Size: <span id="sampleSizeLabel" class="mono text-white">10,000</span>
+                            </label>
+                            <input type="range" id="sampleSize" min="100" max="500000" value="10000" step="100" class="w-full">
+                        </div>
+                        
+                        <!-- Method -->
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">Sampling Method</label>
+                            <select id="method" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="standard">Standard Random</option>
+                                <option value="antithetic">Antithetic Variates</option>
+                                <option value="stratified">Stratified Sampling</option>
+                                <option value="quasi_random">Quasi-Random (Halton)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Run Button -->
+                        <button id="runBtn" class="btn-primary w-full py-3 rounded-xl font-semibold text-white flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Run Simulation
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Results Card -->
+                <div id="resultsCard" class="glass rounded-2xl p-6 hidden">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        Results
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <!-- Estimated Pi -->
+                        <div class="text-center py-4 bg-gray-800/50 rounded-xl">
+                            <p class="text-sm text-gray-400 mb-1">Estimated π</p>
+                            <p id="estimatedPi" class="text-3xl font-bold mono text-green-400">—</p>
+                        </div>
+                        
+                        <!-- Grade Badge -->
+                        <div class="flex justify-center">
+                            <div id="gradeBadge" class="px-6 py-2 rounded-full text-lg font-bold bg-gray-700">—</div>
+                        </div>
+                        
+                        <!-- Stats Grid -->
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div class="stat-card rounded-lg p-3">
+                                <p class="text-gray-400">Error</p>
+                                <p id="errorValue" class="mono font-semibold">—</p>
+                            </div>
+                            <div class="stat-card rounded-lg p-3">
+                                <p class="text-gray-400">Error %</p>
+                                <p id="errorPercent" class="mono font-semibold">—</p>
+                            </div>
+                            <div class="stat-card rounded-lg p-3">
+                                <p class="text-gray-400">Inside</p>
+                                <p id="insideCount" class="mono font-semibold text-green-400">—</p>
+                            </div>
+                            <div class="stat-card rounded-lg p-3">
+                                <p class="text-gray-400">Time</p>
+                                <p id="elapsedTime" class="mono font-semibold">—</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- True Pi Reference -->
+                <div class="glass rounded-2xl p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-400">True Value of π</p>
+                            <p class="mono text-lg text-purple-400">3.14159265358979...</p>
+                        </div>
+                        <div class="text-4xl">π</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Center Column: Scatter Plot -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Scatter Plot -->
+                <div class="glass rounded-2xl p-6">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
+                        </svg>
+                        Random Point Sampling
+                    </h2>
+                    <div class="relative">
+                        <canvas id="scatterCanvas" class="scatter-canvas w-full" style="aspect-ratio: 1;"></canvas>
+                        <div id="scatterPlaceholder" class="absolute inset-0 flex items-center justify-center text-gray-500">
+                            Run simulation to see points
+                        </div>
+                    </div>
+                    <div class="flex justify-center gap-6 mt-4 text-sm">
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                            <span class="text-gray-400">Inside circle</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                            <span class="text-gray-400">Outside circle</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Convergence Chart -->
+                <div class="glass rounded-2xl p-6">
+                    <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                        Convergence Analysis
+                    </h2>
+                    <div style="height: 250px;">
+                        <canvas id="convergenceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="text-center mt-12 text-gray-500 text-sm">
+            <p>πMC v2.0.0 • Monte Carlo Estimation of π</p>
+            <p class="mt-1">Built with Python, Flask, and D3.js</p>
+        </footer>
+    </div>
+
+    <script>
+        // Elements
+        const sampleSizeSlider = document.getElementById('sampleSize');
+        const sampleSizeLabel = document.getElementById('sampleSizeLabel');
+        const methodSelect = document.getElementById('method');
+        const runBtn = document.getElementById('runBtn');
+        const resultsCard = document.getElementById('resultsCard');
+        const scatterCanvas = document.getElementById('scatterCanvas');
+        const scatterPlaceholder = document.getElementById('scatterPlaceholder');
+        
+        // Result elements
+        const estimatedPi = document.getElementById('estimatedPi');
+        const gradeBadge = document.getElementById('gradeBadge');
+        const errorValue = document.getElementById('errorValue');
+        const errorPercent = document.getElementById('errorPercent');
+        const insideCount = document.getElementById('insideCount');
+        const elapsedTime = document.getElementById('elapsedTime');
+        
+        // Charts
+        let convergenceChart = null;
+        
+        // Format number with commas
+        function formatNumber(n) {
+            return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+        
+        // Update sample size label
+        sampleSizeSlider.addEventListener('input', () => {
+            sampleSizeLabel.textContent = formatNumber(sampleSizeSlider.value);
+        });
+        
+        // Get grade color
+        function getGradeColor(grade) {
+            const colors = {
+                'S': 'bg-purple-500',
+                'A': 'bg-green-500',
+                'B': 'bg-green-400',
+                'C': 'bg-yellow-500',
+                'D': 'bg-orange-500',
+                'F': 'bg-red-500'
+            };
+            return colors[grade] || 'bg-gray-500';
+        }
+        
+        // Get error color
+        function getErrorColor(error) {
+            if (error < 0.001) return 'text-purple-400';
+            if (error < 0.01) return 'text-green-400';
+            if (error < 0.05) return 'text-yellow-400';
+            if (error < 0.1) return 'text-orange-400';
+            return 'text-red-400';
+        }
+        
+        // Draw scatter plot
+        function drawScatter(points) {
+            const ctx = scatterCanvas.getContext('2d');
+            const width = scatterCanvas.width = scatterCanvas.offsetWidth * 2;
+            const height = scatterCanvas.height = scatterCanvas.offsetHeight * 2;
+            
+            ctx.fillStyle = '#12121a';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Draw quarter circle
+            ctx.beginPath();
+            ctx.arc(0, height, width, -Math.PI/2, 0);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Draw points
+            const pointSize = Math.max(1, 4 - Math.log10(points.x.length));
+            
+            for (let i = 0; i < points.x.length; i++) {
+                const x = points.x[i] * width;
+                const y = height - points.y[i] * height;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, pointSize, 0, Math.PI * 2);
+                ctx.fillStyle = points.inside[i] ? 'rgba(0, 212, 170, 0.6)' : 'rgba(255, 77, 106, 0.6)';
+                ctx.fill();
+            }
+            
+            scatterPlaceholder.style.display = 'none';
+        }
+        
+        // Draw convergence chart
+        function drawConvergence(data) {
+            const ctx = document.getElementById('convergenceChart').getContext('2d');
+            
+            if (convergenceChart) {
+                convergenceChart.destroy();
+            }
+            
+            convergenceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.sample_sizes,
+                    datasets: [{
+                        label: 'π Estimate',
+                        data: data.estimates,
+                        borderColor: '#4d9fff',
+                        backgroundColor: 'rgba(77, 159, 255, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1,
+                        pointRadius: 0,
+                    }, {
+                        label: 'True π',
+                        data: Array(data.sample_sizes.length).fill(Math.PI),
+                        borderColor: '#9d6eff',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#8888aa' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'logarithmic',
+                            title: { display: true, text: 'Samples', color: '#8888aa' },
+                            ticks: { color: '#8888aa' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        y: {
+                            min: 2.9,
+                            max: 3.4,
+                            title: { display: true, text: 'π Estimate', color: '#8888aa' },
+                            ticks: { color: '#8888aa' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Run simulation
+        async function runSimulation() {
+            runBtn.disabled = true;
+            runBtn.innerHTML = `
+                <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                Running...
+            `;
+            
+            try {
+                const response = await fetch('/api/simulate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        n_points: parseInt(sampleSizeSlider.value),
+                        method: methodSelect.value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update results
+                    resultsCard.classList.remove('hidden');
+                    resultsCard.classList.add('fade-in');
+                    
+                    const errorColor = getErrorColor(data.error);
+                    estimatedPi.textContent = data.estimate.toFixed(10);
+                    estimatedPi.className = `text-3xl font-bold mono ${errorColor}`;
+                    
+                    gradeBadge.textContent = data.grade;
+                    gradeBadge.className = `px-6 py-2 rounded-full text-lg font-bold ${getGradeColor(data.grade)}`;
+                    
+                    errorValue.textContent = data.error.toExponential(2);
+                    errorValue.className = `mono font-semibold ${errorColor}`;
+                    
+                    errorPercent.textContent = data.error_percent.toFixed(4) + '%';
+                    insideCount.textContent = formatNumber(data.n_inside);
+                    elapsedTime.textContent = data.elapsed_ms.toFixed(1) + ' ms';
+                    
+                    // Draw scatter if points available
+                    if (data.points) {
+                        drawScatter(data.points);
+                    }
+                    
+                    // Draw convergence chart
+                    if (data.convergence) {
+                        drawConvergence(data.convergence);
+                    }
+                }
+            } catch (err) {
+                console.error('Simulation error:', err);
+            } finally {
+                runBtn.disabled = false;
+                runBtn.innerHTML = `
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Run Simulation
+                `;
+            }
+        }
+        
+        // Event listeners
+        runBtn.addEventListener('click', runSimulation);
+        
+        // Initial empty chart
+        const ctx = document.getElementById('convergenceChart').getContext('2d');
+        convergenceChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: [], datasets: [] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { display: false },
+                    y: { display: false }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

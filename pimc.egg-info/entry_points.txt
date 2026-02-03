@@ -1,0 +1,2 @@
+[console_scripts]
+pimc = pimc.cli.main:main
